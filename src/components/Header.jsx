@@ -9,18 +9,29 @@ export default function Header() {
   }
 
   return (
-    <header style={{ background: 'rgba(250, 242, 255, 0.9)', borderBottom: '1px solid rgba(94, 53, 177, 0.12)' }}>
-      <nav style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 20px', maxWidth: '335px', margin: '0 auto' }}>
-        <h1 style={{ margin: '0 0 12px 0', fontSize: '1.14rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-high)' }}>
-          AlzhCare
-        </h1>
-        
-        {/* Navegação rápida */}
+    <>
+      <header style={{ background: 'rgba(250, 242, 255, 0.9)', borderBottom: '1px solid rgba(94, 53, 177, 0.12)' }}>
+        <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 20px', maxWidth: '335px', margin: '0 auto' }}>
+          <h1 style={{ margin: 0, fontSize: '1.14rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-high)' }}>
+            AlzhCare
+          </h1>
+        </nav>
+      </header>
+      
+      {/* Navegação rápida abaixo do header */}
+      <div style={{
+        background: 'rgba(250, 242, 255, 0.7)',
+        borderBottom: '1px solid rgba(94, 53, 177, 0.08)',
+        padding: '12px 20px',
+        display: 'flex',
+        justifyContent: 'center'
+      }}>
         <div style={{
           display: 'flex',
           gap: '8px',
           flexWrap: 'wrap',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          maxWidth: '335px'
         }}>
           <button
             onClick={() => scrollToSection('vitals')}
@@ -94,7 +105,7 @@ export default function Header() {
             📊 Resumo
           </button>
         </div>
-      </nav>
-    </header>
+      </div>
+    </>
   )
 }

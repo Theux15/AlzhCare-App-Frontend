@@ -4,6 +4,7 @@ import Hero from './components/Hero'
 import VitalsGrid from './components/VitalsGrid'
 import FallsCard from './components/FallsCard'
 import MapCard from './components/MapCard'
+import MapViewer from './components/MapViewer'
 import HistoryList from './components/HistoryList'
 import DailySummary from './components/DailySummary'
 import './index.css'
@@ -56,7 +57,10 @@ export default function App() {
             <h3>Localização</h3>
             <small>GPS Neo6M · Precisão 3 m</small>
           </div>
-          <MapCard />
+          <div style={{ display: 'grid', gap: '16px' }}>
+            <MapCard />
+            <MapViewer />
+          </div>
         </section>
 
         <section>
