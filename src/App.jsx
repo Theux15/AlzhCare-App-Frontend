@@ -7,17 +7,28 @@ import MapCard from './components/MapCard'
 import MapViewer from './components/MapViewer'
 import HistoryList from './components/HistoryList'
 import DailySummary from './components/DailySummary'
+import SOSAlert from './components/SOSAlert'
+import SOSCard from './components/SOSCard'
 import './index.css'
 import { defaultSnapshot, historySeed, normalizePayload } from './utils/sensors'
 
 export default function App() {
   const [lastUpdate] = useState('agora mesmo')
+  const [sosActive, setSosActive] = useState(false)
   const demoVitals = { bpm: 76, spo2: 97, temp: 25.4 }
   const demoHistory = [
     { time: '09:45', summary: 'BPM 78, SpO₂ 97%, TempAmb 25.2 °C', fall: false },
     { time: '09:15', summary: 'BPM 81, SpO₂ 96%, TempAmb 25.8 °C', fall: false },
     { time: '08:10', summary: 'BPM 75, SpO₂ 98%, TempAmb 24.9 °C', fall: false }
   ]
+
+  const handleSOSActivate = () => {
+    setSosActive(true)
+  }
+
+  const handleSOSDismiss = () => {
+    setSosActive(false)
+  }
 
   // expose a minimal MQTT-like push hook (compatible with original)
   window.AlzhCareMQTT = {
@@ -30,8 +41,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--purple-100)', color: 'var(--text-high)', display: 'flex', flexDirection: 'column' }}>
+      <SOSAlert isActive={sosActive} onDismiss={handleSOSDismiss} />
       <Header />
-      <main style={{ flex: 1 }} className="app-main">
+      <main style={{ flex: 1, paddingTop: sosActive ? '70px' : '0', transition: 'padding-top 0.3s ease' }} className="app-main">
         <Hero lastUpdate={lastUpdate} />
 
         <section id="vitals">
@@ -50,6 +62,14 @@ export default function App() {
           <div className="grid">
             <FallsCard />
           </div>
+        </section>
+
+        <section>
+          <div className="section-title">
+            <h3>Sistema de Emergência</h3>
+            <small>Botão SOS · Resposta imediata</small>
+          </div>
+          <SOSCard onSOSActivate={handleSOSActivate} sosActive={sosActive} />
         </section>
 
         <section id="location">
