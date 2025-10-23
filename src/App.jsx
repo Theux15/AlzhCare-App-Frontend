@@ -5,6 +5,7 @@ import VitalsGrid from './components/VitalsGrid'
 import FallsCard from './components/FallsCard'
 import MapCard from './components/MapCard'
 import HistoryList from './components/HistoryList'
+import DailySummary from './components/DailySummary'
 import './index.css'
 import { defaultSnapshot, historySeed, normalizePayload } from './utils/sensors'
 
@@ -32,7 +33,7 @@ export default function App() {
       <main style={{ flex: 1 }} className="app-main">
         <Hero lastUpdate={lastUpdate} />
 
-        <section>
+        <section id="vitals">
           <div className="section-title">
             <h3>Informações vitais</h3>
             <small>ID · ESP32-ALZHCARE-01</small>
@@ -50,7 +51,7 @@ export default function App() {
           </div>
         </section>
 
-        <section>
+        <section id="location">
           <div className="section-title">
             <h3>Localização</h3>
             <small>GPS Neo6M · Precisão 3 m</small>
@@ -65,6 +66,14 @@ export default function App() {
           </div>
           <HistoryList items={demoHistory} />
         </section>
+
+        <section id="daily-summary">
+          <div className="section-title" style={{ textAlign: 'center', flexDirection: 'column', alignItems: 'center' }}>
+            <h3>Resumo do dia</h3>
+            <small>Consolidação de eventos e localizações</small>
+          </div>
+          <DailySummary />
+        </section>
       </main>
 
       <footer style={{
@@ -73,7 +82,21 @@ export default function App() {
         color: 'var(--text-low)',
         fontSize: '0.78rem'
       }}>
-        Desenvolvido para o TCC AlzhCare · Prototipagem digital v0.1 · Integração real via Bluetooth/Wi-Fi em desenvolvimento
+        <div style={{ marginBottom: '12px' }}>
+          Desenvolvido para o TCC AlzhCare · Prototipagem digital v0.1 · Integração real via Bluetooth/Wi-Fi em desenvolvimento
+        </div>
+        <div style={{
+          background: 'rgba(252, 165, 165, 0.1)',
+          border: '1px solid rgba(239, 68, 68, 0.2)',
+          borderRadius: '8px',
+          padding: '8px 12px',
+          fontSize: '0.7rem',
+          color: 'var(--text-medium)',
+          maxWidth: '280px',
+          margin: '0 auto'
+        }}>
+          ⚠️ <strong>Disclaimer:</strong> Este é um protótipo em desenvolvimento. As leituras dos sensores podem apresentar imprecisões e não devem ser usadas para diagnósticos médicos reais.
+        </div>
       </footer>
     </div>
   )
