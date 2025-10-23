@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* design tokens (AlzhCare palette) */
+:root {
+	--purple-100: #faf2ff;
+	--purple-200: #baa0d3;
+	--purple-300: #7e57c2;
+	--purple-400: #5e35b1;
+	--purple-500: #2f1369;
+	--purple-900: #1a1124;
+	--purple-950: #3a2a4f;
+	--yellow-400: #ffea00;
+	--text-high: #2f1369;
+	--text-mid: #452b7b;
+	--text-low: #5e4a8c;
+	--surface: #ffffff;
+	--surface-alt: rgba(186, 160, 211, 0.18);
+	--card-shadow: 0 20px 40px rgba(47, 19, 105, 0.15);
+}
+/* load Inter for a modern sans-serif look */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+/* global page layout */
+html, body, #root {
+	height: 100%;
+}
+body {
+	margin: 0;
+	font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+	background: var(--purple-100);
+	color: var(--text-high);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* main container spacing to keep content centered with margins */
+.app-main { max-width: 335px; width: calc(100% - 40px); margin: 0 auto; padding: 0 0 96px; }
+
+/* small helpers for the dashboard */
+.shadow-card-shadow { box-shadow: var(--card-shadow); }
+.metric-value { font-size: 2.2rem; font-weight: 700; color: var(--text-high); margin: 0; }
+.metric-sub { margin: 4px 0 0; color: var(--text-low); font-size: 0.8rem; }
+.card-title { font-size: 0.95rem; margin: 0; color: var(--text-mid); font-weight: 600; }
+.section-title { margin: 32px 0 12px; display: flex; justify-content: space-between; align-items: center; }
+.section-title h3 { margin: 0; font-size: 1.1rem; letter-spacing: 0.01em; color: var(--text-high); }
+.section-title small { color: var(--text-low); font-size: 0.78rem; }
+.trend { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 0.78rem; color: var(--text-low); }
+
+/* grid spacing */
+.grid { display: grid; gap: 14px; }
+/* Avoid using @apply here to prevent PostCSS/Tailwind @apply resolution issues in some setups.
+	 Provide equivalent plain CSS so components that rely on `chip` class render correctly. */
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	border-radius: 999px;
+	padding: 6px 12px;
+	font-size: 0.75rem;
+	font-weight: 600;
+}
+
+/* color variants for chips to match AlzhCare palette */
+.chip.safe {
+	background: rgba(76, 175, 80, 0.12);
+	color: #2e7d32;
+}
+.chip.alert {
+	background: rgba(255, 82, 82, 0.12);
+	color: #d32f2f;
+}
+.chip.attention {
+	background: rgba(255, 234, 0, 0.14);
+	color: #7c6500;
+}
+
+/* slightly larger card radius to match original design */
+.card-rounded { border-radius: 22px; }
+
+/* subtle hover lift for interactive feel */
+.card:hover { transform: translateY(-4px); box-shadow: 0 26px 44px rgba(47, 19, 105, 0.18); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+
+/* internal content spacing for cards */
+.card { position: relative; border-radius: 22px; padding: 18px; background: var(--surface); box-shadow: var(--card-shadow); }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+
+/* Hero adjustments */
+.hero-update-box { min-width: 180px; }
+.hero-update-box .truncate { max-width: 160px; }
+
+@media (min-width: 480px) {
+  body { align-items: center; background: radial-gradient(circle at top, rgba(186, 160, 211, 0.35), transparent 55%) var(--purple-100); }
+}
