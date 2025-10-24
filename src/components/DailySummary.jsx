@@ -1,28 +1,25 @@
 import React from 'react'
 
-export default function DailySummary() {
-  // Mock data - em uma aplicação real, estes dados viriam do banco
-  const dailyData = {
-    date: new Date().toLocaleDateString('pt-BR', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }),
-    alerts: {
-      falls: 0,
-      vitalsOutOfRange: 1,
-      locations: 3
-    },
-    vitalsEvents: [
-      { time: '14:23', type: 'bpm', value: 102, status: 'alto', normal: '60-100' },
-    ],
-    locations: [
-      { time: '15:30', address: 'Rua das Acácias, 120', neighborhood: 'Centro' },
-      { time: '14:15', address: 'Av. Afonso Pena, 1500', neighborhood: 'Centro' },
-      { time: '09:00', address: 'Rua das Acácias, 120', neighborhood: 'Centro' }
-    ]
-  }
+export default function DailySummary({ summary, isOnline = true }) {
+  // Dados padrão se não houver summary
+  const defaultSummary = {
+    date: new Date().toISOString().split('T')[0],
+    fallsCount: 0,
+    vitalsAlertsCount: 0,
+    locationsCount: 0,
+    vitalsAlerts: [],
+    locations: []
+  };
+
+  const dailyData = summary || defaultSummary;
+  
+  // Formatação da data
+  const displayDate = new Date(dailyData.date).toLocaleDateString('pt-BR', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
 
   return (
     <div style={{
@@ -48,7 +45,7 @@ export default function DailySummary() {
           fontSize: '0.85rem',
           textTransform: 'capitalize'
         }}>
-          {dailyData.date}
+          {displayDate}
         </p>
       </div>
 
@@ -61,41 +58,41 @@ export default function DailySummary() {
       }}>
         {/* Quedas */}
         <div style={{
-          background: dailyData.alerts.falls > 0 ? '#fef2f2' : '#f0fdf4',
-          border: `1px solid ${dailyData.alerts.falls > 0 ? '#fecaca' : '#bbf7d0'}`,
+          background: dailyData.fallsCount > 0 ? '#fef2f2' : '#f0fdf4',
+          border: `1px solid ${dailyData.fallsCount > 0 ? '#fecaca' : '#bbf7d0'}`,
           borderRadius: '12px',
           padding: '12px 8px',
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>
-            {dailyData.alerts.falls > 0 ? '⚠️' : '✅'}
+            {dailyData.fallsCount > 0 ? '⚠️' : '✅'}
           </div>
           <div style={{ 
             fontSize: '0.7rem', 
-            color: dailyData.alerts.falls > 0 ? '#dc2626' : '#16a34a',
+            color: dailyData.fallsCount > 0 ? '#dc2626' : '#16a34a',
             fontWeight: '600'
           }}>
-            {dailyData.alerts.falls} quedas
+            {dailyData.fallsCount} quedas
           </div>
         </div>
 
         {/* Sinais vitais */}
         <div style={{
-          background: dailyData.alerts.vitalsOutOfRange > 0 ? '#fef3cd' : '#f0fdf4',
-          border: `1px solid ${dailyData.alerts.vitalsOutOfRange > 0 ? '#fde68a' : '#bbf7d0'}`,
+          background: dailyData.vitalsAlertsCount > 0 ? '#fef3cd' : '#f0fdf4',
+          border: `1px solid ${dailyData.vitalsAlertsCount > 0 ? '#fde68a' : '#bbf7d0'}`,
           borderRadius: '12px',
           padding: '12px 8px',
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>
-            {dailyData.alerts.vitalsOutOfRange > 0 ? '🟡' : '✅'}
+            {dailyData.vitalsAlertsCount > 0 ? '🟡' : '✅'}
           </div>
           <div style={{ 
             fontSize: '0.7rem', 
-            color: dailyData.alerts.vitalsOutOfRange > 0 ? '#d97706' : '#16a34a',
+            color: dailyData.vitalsAlertsCount > 0 ? '#d97706' : '#16a34a',
             fontWeight: '600'
           }}>
-            {dailyData.alerts.vitalsOutOfRange} alteração
+            {dailyData.vitalsAlertsCount} alertas
           </div>
         </div>
 
@@ -113,13 +110,13 @@ export default function DailySummary() {
             color: '#0284c7',
             fontWeight: '600'
           }}>
-            {dailyData.alerts.locations} locais
+            {dailyData.locationsCount} locais
           </div>
         </div>
       </div>
 
       {/* Eventos de sinais vitais */}
-      {dailyData.vitalsEvents.length > 0 && (
+      {dailyData.vitalsAlerts && dailyData.vitalsAlerts.length > 0 && (
         <div style={{ marginBottom: '20px' }}>
           <h4 style={{
             margin: '0 0 12px 0',
@@ -129,7 +126,7 @@ export default function DailySummary() {
           }}>
             🩺 Alterações nos sinais vitais
           </h4>
-          {dailyData.vitalsEvents.map((event, index) => (
+          {dailyData.vitalsAlerts.map((event, index) => (
             <div key={index} style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -166,36 +163,47 @@ export default function DailySummary() {
         }}>
           📍 Localizações do dia
         </h4>
-        {dailyData.locations.map((location, index) => (
-          <div key={index} style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '8px 12px',
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            marginBottom: '6px'
-          }}>
-            <div>
-              <span style={{ fontSize: '0.75rem', color: '#475569', fontWeight: '600' }}>
-                {location.time}
-              </span>
-              <div style={{ fontSize: '0.8rem', color: '#334155' }}>
-                {location.address}
-              </div>
-            </div>
-            <span style={{ 
-              fontSize: '0.7rem', 
-              color: '#64748b',
-              background: '#f1f5f9',
-              padding: '2px 6px',
-              borderRadius: '4px'
+        {dailyData.locations && dailyData.locations.length > 0 ? (
+          dailyData.locations.map((location, index) => (
+            <div key={index} style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '8px 12px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              marginBottom: '6px'
             }}>
-              {location.neighborhood}
-            </span>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: '#475569', fontWeight: '600' }}>
+                  {new Date(location.timestamp).toLocaleTimeString()}
+                </span>
+                <div style={{ fontSize: '0.8rem', color: '#334155' }}>
+                  {location.address || `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`}
+                </div>
+              </div>
+              <span style={{ 
+                fontSize: '0.7rem', 
+                color: '#64748b',
+                background: '#f1f5f9',
+                padding: '2px 6px',
+                borderRadius: '4px'
+              }}>
+                {location.neighborhood || 'Localização'}
+              </span>
+            </div>
+          ))
+        ) : (
+          <div style={{
+            padding: '16px',
+            textAlign: 'center',
+            color: '#6b7280',
+            fontSize: '0.85rem'
+          }}>
+            {isOnline ? 'Nenhuma mudança de localização hoje' : 'Sistema offline'}
           </div>
-        ))}
+        )}
       </div>
     </div>
   )

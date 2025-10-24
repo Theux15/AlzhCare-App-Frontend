@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 
-export default function MapViewer() {
-  // Mock data - coordenadas de Belo Horizonte
+export default function MapViewer({ latitude = 0, longitude = 0, accuracy = 0 }) {
+  // Usar as coordenadas recebidas do GPS ou fallback para Belo Horizonte
   const locationData = {
-    latitude: -19.9167,
-    longitude: -43.9345,
-    address: "Rua das Acácias, 120",
-    neighborhood: "Centro"
+    latitude: latitude || -19.9167,
+    longitude: longitude || -43.9345,
+    address: latitude && longitude ? "Localização GPS" : "Rua das Acácias, 120",
+    neighborhood: latitude && longitude ? "Coordenadas recebidas" : "Centro"
   }
 
   const [mapError, setMapError] = useState(false)
@@ -46,6 +46,11 @@ export default function MapViewer() {
               color: 'var(--text-medium)'
             }}>
               {locationData.address}
+              {accuracy > 0 && (
+                <span style={{ marginLeft: '8px', color: '#6b7280' }}>
+                  (±{accuracy.toFixed(1)}m)
+                </span>
+              )}
             </p>
           </div>
           <div style={{

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 
-export default function SOSAlert({ isActive = false, onDismiss }) {
+export default function SOSAlert({ isActive = false }) {
   const [timePressed, setTimePressed] = useState(null)
   const [blinking, setBlinking] = useState(true)
 
@@ -73,28 +73,6 @@ export default function SOSAlert({ isActive = false, onDismiss }) {
             </div>
           </div>
         </div>
-
-        <button
-          onClick={onDismiss}
-          style={{
-            background: 'rgba(255, 255, 255, 0.2)',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            borderRadius: '8px',
-            color: 'white',
-            padding: '6px 12px',
-            fontSize: '0.7rem',
-            cursor: 'pointer',
-            fontWeight: '600'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.background = 'rgba(255, 255, 255, 0.3)'
-          }}
-          onMouseOut={(e) => {
-            e.target.style.background = 'rgba(255, 255, 255, 0.2)'
-          }}
-        >
-          RESOLVER
-        </button>
       </div>
     </div>
   )

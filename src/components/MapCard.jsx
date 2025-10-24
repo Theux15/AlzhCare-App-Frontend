@@ -1,13 +1,34 @@
 import React, { useState, useEffect } from 'react'
 
-export default function MapCard() {
-  // Mock data - em uma aplicação real, estes dados viriam de props ou context
-  const [gpsData, setGpsData] = useState({
-    altitude: 850.2,
-    velocity: 0.8,
-    satellites: 8,
-    isActive: true
-  })
+export default function MapCard({ sensorData, onToggleMap, showMap, isOnline = true }) {
+  // Extrair dados GPS dos sensores
+  const gpsData = sensorData?.location || {};
+  const gpsInfo = {
+    latitude: gpsData.latitude || 0,
+    longitude: gpsData.longitude || 0,
+    altitude: gpsData.altitude || 0,
+    velocity: gpsData.speed || 0,
+    satellites: gpsData.satellites || 0,
+    accuracy: gpsData.accuracy || 0,
+    isActive: isOnline && (gpsData.gps_valid || gpsData.satellites > 0)
+  };
+
+  // Estado da localização
+  const [locationText, setLocationText] = useState('Aguardando localização...');
+
+  useEffect(() => {
+    if (gpsInfo.latitude && gpsInfo.longitude && gpsInfo.isActive) {
+      // Usar o endereço formatado se disponível, senão mostrar coordenadas
+      const address = sensorData?.location?.formatted_address || sensorData?.location?.address?.formatted;
+      if (address) {
+        setLocationText(`${address} · Última atualização agora`);
+      } else {
+        setLocationText(`${gpsInfo.latitude.toFixed(6)}, ${gpsInfo.longitude.toFixed(6)} · Última atualização agora`);
+      }
+    } else {
+      setLocationText('Aguardando sinal GPS...');
+    }
+  }, [gpsInfo.latitude, gpsInfo.longitude, gpsInfo.isActive, sensorData?.location?.formatted_address, sensorData?.location?.address?.formatted]);
 
   return (
     <div
@@ -39,23 +60,31 @@ export default function MapCard() {
         opacity: 0.9
       }}>
         <span>🛰️</span>
-        <span style={{ fontWeight: 'bold' }}>{gpsData.satellites}</span>
+        <span style={{ fontWeight: 'bold' }}>{gpsInfo.satellites}</span>
         <span style={{
-          color: gpsData.isActive ? '#4ade80' : '#f87171',
+          color: gpsInfo.isActive ? '#4ade80' : '#f87171',
           fontSize: '0.7rem',
           fontWeight: '500'
         }}>
-          {gpsData.isActive ? 'ativo' : 'inativo'}
+          {gpsInfo.isActive ? 'ativo' : 'inativo'}
         </span>
       </div>
 
       {/* Conteúdo principal */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div 
+        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: onToggleMap ? 'pointer' : 'default' }}
+        onClick={onToggleMap}
+      >
         <div>
-          <strong>Residência monitorada</strong>
+          <strong>{gpsInfo.isActive ? 'Localização GPS' : 'GPS Desconectado'}</strong>
           <p id="locationText" style={{ margin: '6px 0 0', fontSize: '0.85rem' }}>
-            Rua das Acácias, 120 · Belo Horizonte · Última atualização há 2 min
+            {locationText}
           </p>
+          {onToggleMap && (
+            <p style={{ margin: '4px 0 0', fontSize: '0.7rem', opacity: 0.7 }}>
+              {showMap ? 'Clique para fechar o mapa' : 'Clique para ver no mapa'}
+            </p>
+          )}
         </div>
       </div>
 
@@ -74,7 +103,7 @@ export default function MapCard() {
           fontSize: '0.75rem'
         }}>
           <span>📏</span>
-          <span>{gpsData.altitude.toFixed(1)}m</span>
+          <span>{gpsInfo.altitude > 0 ? `${gpsInfo.altitude.toFixed(1)}m` : '--'}</span>
         </div>
         <div style={{
           display: 'flex',
@@ -83,8 +112,19 @@ export default function MapCard() {
           fontSize: '0.75rem'
         }}>
           <span>🚶‍♂️</span>
-          <span>{gpsData.velocity.toFixed(1)} km/h</span>
+          <span>{gpsInfo.velocity > 0 ? `${gpsInfo.velocity.toFixed(1)} km/h` : '--'}</span>
         </div>
+        {gpsInfo.accuracy > 0 && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            fontSize: '0.75rem'
+          }}>
+            <span>📍</span>
+            <span>±{gpsInfo.accuracy.toFixed(0)}m</span>
+          </div>
+        )}
       </div>
     </div>
   )

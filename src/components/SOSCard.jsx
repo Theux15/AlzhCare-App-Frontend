@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function SOSCard({ onSOSActivate, sosActive }) {
+export default function SOSCard({ sosActive }) {
   return (
     <div style={{
       background: sosActive ? 
@@ -66,7 +66,7 @@ export default function SOSCard({ onSOSActivate, sosActive }) {
         }
       </p>
 
-      {sosActive ? (
+      {sosActive && (
         <div style={{
           display: 'flex',
           gap: '8px',
@@ -98,29 +98,6 @@ export default function SOSCard({ onSOSActivate, sosActive }) {
             📞 Ligar para Usuário
           </button>
         </div>
-      ) : (
-        <button
-          onClick={onSOSActivate}
-          style={{
-            background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-            color: '#92400e',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '8px 16px',
-            fontSize: '0.8rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'transform 0.2s ease'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.transform = 'scale(1.05)'
-          }}
-          onMouseOut={(e) => {
-            e.target.style.transform = 'scale(1)'
-          }}
-        >
-          🧪 Testar Alerta SOS
-        </button>
       )}
 
       {sosActive && (
