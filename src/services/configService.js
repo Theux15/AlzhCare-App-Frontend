@@ -2,6 +2,10 @@
 const CONFIG_KEY = 'alzhcare_config';
 
 class ConfigService {
+  constructor() {
+    this.storageKey = CONFIG_KEY;
+  }
+
   // Carregar configurações
   getConfig() {
     try {

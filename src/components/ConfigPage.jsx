@@ -80,9 +80,17 @@ export default function ConfigPage() {
 
   const handleClearConfig = () => {
     if (window.confirm('⚠️ Tem certeza que deseja limpar todas as configurações? Esta ação não pode ser desfeita.')) {
-      const success = configService.clearConfig();
-      if (success) {
-        setConfig(configService.getDefaultConfig());
+      const cleared = configService.clearConfig();
+      if (cleared) {
+        // Atualizar o estado com configurações padrão (vazias)
+        const defaultConfig = configService.getDefaultConfig();
+        setConfig(defaultConfig);
+        
+        // Limpar também os estados de loading, success e errors
+        setLoading({});
+        setSuccess({});
+        setErrors({});
+        
         alert('✓ Configurações limpas com sucesso!');
       } else {
         alert('❌ Erro ao limpar configurações');
