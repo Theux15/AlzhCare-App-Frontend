@@ -39,28 +39,28 @@ export default function VitalsGrid({ sensorData, vitalsAlerts = [], isOnline = t
     temp: sensorData.esp32.temperature || 0
   } : defaultVitals;
 
-  // Determinar status com base em alertas de sinais vitais
+  // Determinar status com base nos valores dos sinais vitais
   const getBPMStatus = () => {
     if (!isOnline) return { chip: 'warning', text: 'Offline' };
     if (vitals.bpm === 0) return { chip: 'warning', text: 'Sem dados' };
-    const alert = vitalsAlerts.find(a => a.type === 'bpm');
-    if (alert) return { chip: 'alert', text: 'Anormal' };
+    // Verificar se está fora dos limites normais (60-100 bpm)
+    if (vitals.bpm < 60 || vitals.bpm > 100) return { chip: 'alert', text: 'Anormal' };
     return { chip: 'safe', text: 'Normal' };
   };
 
   const getSpO2Status = () => {
     if (!isOnline) return { chip: 'warning', text: 'Offline' };
     if (vitals.spo2 === 0) return { chip: 'warning', text: 'Sem dados' };
-    const alert = vitalsAlerts.find(a => a.type === 'spo2');
-    if (alert) return { chip: 'alert', text: 'Baixo' };
+    // Verificar se está abaixo de 95%
+    if (vitals.spo2 < 95) return { chip: 'alert', text: 'Baixo' };
     return { chip: 'safe', text: 'Normal' };
   };
 
   const getTempStatus = () => {
     if (!isOnline) return { chip: 'warning', text: 'Offline' };
     if (vitals.temp === 0) return { chip: 'warning', text: 'Sem dados' };
-    const alert = vitalsAlerts.find(a => a.type === 'temperature');
-    if (alert) return { chip: 'alert', text: 'Anormal' };
+    // Verificar se está fora da faixa recomendada (20-30°C)
+    if (vitals.temp < 20 || vitals.temp > 30) return { chip: 'alert', text: 'Anormal' };
     return { chip: 'safe', text: 'Normal' };
   };
 

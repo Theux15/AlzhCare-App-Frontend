@@ -6,9 +6,14 @@ class LocalStorageService {
       fallAlerts: 'alzhcare_fall_alerts', 
       sosAlerts: 'alzhcare_sos_alerts',
       lastReading: 'alzhcare_last_reading',
-      dailyStats: 'alzhcare_daily_stats'
+      dailyStats: 'alzhcare_daily_stats',
+      readingsHistory: 'alzhcare_readings_history' // Novo: histórico de leituras
     };
     this.maxItems = 50; // Máximo de itens para manter no localStorage
+    this.maxNormalReadings = 5; // Máximo de leituras normais no histórico
+    this.maxAlertsPerType = 10; // Máximo de alertas por tipo (BPM, SpO2, Temperatura)
+    this.alertGroupingWindow = 300000; // 5 minutos em ms - alertas do mesmo tipo dentro dessa janela são agrupados
+    this.temperatureTolerance = 0.5; // ±0.5°C para considerar mesma temperatura no agrupamento
   }
 
   // Salvar alerta de sinais vitais anormais
@@ -167,8 +172,140 @@ class LocalStorageService {
       };
       
       localStorage.setItem(this.keys.lastReading, JSON.stringify(data));
+      
+      // Também salvar no histórico de leituras
+      this.saveReadingToHistory(data);
     } catch (error) {
       console.error('❌ Erro ao salvar última leitura:', error);
+    }
+  }
+
+  // Salvar leitura no histórico (alertas agrupados e limitados, normais até 5)
+  saveReadingToHistory(reading) {
+    try {
+      const history = this.getReadingsHistory();
+      const isAlert = reading.status === 'alert';
+      
+      if (isAlert) {
+        // Identificar tipo de alerta baseado nos valores
+        const alertTypes = [];
+        if (reading.vitals?.bpm && (reading.vitals.bpm < 60 || reading.vitals.bpm > 100)) {
+          alertTypes.push('bpm');
+        }
+        if (reading.vitals?.spo2 && reading.vitals.spo2 < 95) {
+          alertTypes.push('spo2');
+        }
+        if (reading.vitals?.temperature && (reading.vitals.temperature < 20 || reading.vitals.temperature > 30)) {
+          alertTypes.push('temperature');
+        }
+        
+        // Para cada tipo de alerta, verificar se pode agrupar com alertas recentes
+        let shouldAddNew = true;
+        const now = new Date(reading.timestamp).getTime();
+        
+        alertTypes.forEach(type => {
+          // Buscar último alerta do mesmo tipo
+          const lastAlertOfType = history.find(h => 
+            h.status === 'alert' && 
+            h.alertType === type && 
+            !h.grouped
+          );
+          
+          if (lastAlertOfType) {
+            const lastTime = new Date(lastAlertOfType.timestamp).getTime();
+            const timeDiff = now - lastTime;
+            
+            // Verificar se está dentro da janela de agrupamento (5 min)
+            if (timeDiff <= this.alertGroupingWindow) {
+              // Para temperatura, verificar tolerância de ±0.5°C
+              let canGroup = true;
+              if (type === 'temperature') {
+                const currentTemp = reading.vitals?.temperature || 0;
+                const lastTemp = lastAlertOfType.vitals?.temperature || 0;
+                const tempDiff = Math.abs(currentTemp - lastTemp);
+                canGroup = tempDiff <= this.temperatureTolerance;
+              }
+              
+              if (canGroup) {
+                lastAlertOfType.lastOccurrence = reading.timestamp;
+                lastAlertOfType.occurrences = (lastAlertOfType.occurrences || 1) + 1;
+                lastAlertOfType.duration = Math.floor(timeDiff / 1000); // em segundos
+                shouldAddNew = false;
+                console.log(`🔄 Alerta de ${type} agrupado (${lastAlertOfType.occurrences} ocorrências, ${Math.floor(lastAlertOfType.duration / 60)}min)`);
+              } else {
+                console.log(`🌡️ Temperatura fora da tolerância (±${this.temperatureTolerance}°C), criando novo alerta`);
+              }
+            }
+          }
+        });
+        
+        // Se não foi agrupado, adicionar novo alerta
+        if (shouldAddNew) {
+          history.unshift({
+            ...reading,
+            id: Date.now(),
+            alertType: alertTypes[0] || 'general', // Tipo principal
+            occurrences: 1,
+            grouped: false
+          });
+          console.log(`🚨 Novo alerta de ${alertTypes.join(', ')} registrado`);
+        }
+        
+        // Limitar alertas por tipo
+        const limitedHistory = this.limitAlertsByType(history);
+        localStorage.setItem(this.keys.readingsHistory, JSON.stringify(limitedHistory));
+        
+      } else {
+        // Leituras normais - apenas adicionar e manter últimas 5
+        history.unshift({
+          ...reading,
+          id: Date.now()
+        });
+        
+        const alerts = history.filter(r => r.status === 'alert');
+        const normals = history.filter(r => r.status === 'normal').slice(0, this.maxNormalReadings);
+        const filteredHistory = [...alerts, ...normals];
+        filteredHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        localStorage.setItem(this.keys.readingsHistory, JSON.stringify(filteredHistory));
+      }
+      
+      const stats = this.getReadingsHistory();
+      const alertCount = stats.filter(r => r.status === 'alert').length;
+      const normalCount = stats.filter(r => r.status === 'normal').length;
+      console.log(`📊 Histórico: ${alertCount} alertas + ${normalCount} normais`);
+      
+    } catch (error) {
+      console.error('❌ Erro ao salvar no histórico:', error);
+    }
+  }
+  
+  // Limitar alertas por tipo (máximo 10 de cada)
+  limitAlertsByType(history) {
+    const alerts = history.filter(r => r.status === 'alert');
+    const normals = history.filter(r => r.status === 'normal');
+    
+    // Agrupar alertas por tipo
+    const bpmAlerts = alerts.filter(a => a.alertType === 'bpm').slice(0, this.maxAlertsPerType);
+    const spo2Alerts = alerts.filter(a => a.alertType === 'spo2').slice(0, this.maxAlertsPerType);
+    const tempAlerts = alerts.filter(a => a.alertType === 'temperature').slice(0, this.maxAlertsPerType);
+    const otherAlerts = alerts.filter(a => !['bpm', 'spo2', 'temperature'].includes(a.alertType)).slice(0, this.maxAlertsPerType);
+    
+    const limitedAlerts = [...bpmAlerts, ...spo2Alerts, ...tempAlerts, ...otherAlerts];
+    const combined = [...limitedAlerts, ...normals];
+    combined.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    return combined;
+  }
+
+  // Obter histórico de leituras
+  getReadingsHistory() {
+    try {
+      const stored = localStorage.getItem(this.keys.readingsHistory);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('❌ Erro ao ler histórico:', error);
+      return [];
     }
   }
 
@@ -248,6 +385,14 @@ class LocalStorageService {
         );
         localStorage.setItem(key, JSON.stringify(filtered));
       });
+      
+      // Limpar histórico de leituras antigas (alertas antigos)
+      const history = this.getReadingsHistory();
+      const alerts = history.filter(r => r.status === 'alert' && new Date(r.timestamp) > sevenDaysAgo);
+      const normals = history.filter(r => r.status === 'normal').slice(0, this.maxNormalReadings);
+      const cleanedHistory = [...alerts, ...normals];
+      cleanedHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      localStorage.setItem(this.keys.readingsHistory, JSON.stringify(cleanedHistory));
       
       console.log('🧹 Dados antigos limpos do localStorage');
     } catch (error) {

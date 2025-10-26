@@ -28,19 +28,22 @@ export default function HistoryList({ history = [], isOnline = true }) {
         Histórico de Leituras ({history.length})
       </h3>
       <div style={{ display: 'grid', gap: '1rem' }}>
-        {history.slice(0, 10).map((item, idx) => {
-          // Para data/hora, vamos usar a data atual com a hora fornecida
-          const today = new Date();
-          const [hours, minutes] = (item.time || '00:00').split(':');
-          const timestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes));
-          
-          const hasAlert = item.sos || item.fall;
+        {history.map((reading, idx) => {
+          const timestamp = new Date(reading.timestamp);
+          const hasAlert = reading.status === 'alert';
+          const isGrouped = reading.occurrences && reading.occurrences > 1;
+          const durationMinutes = reading.duration ? Math.floor(reading.duration / 60) : 0;
 
           return (
-            <article className="card" key={idx}>
+            <article className="card" key={reading.id || idx}>
               <div className="card-header">
                 <h4 className="card-title">
-                  {timestamp.toLocaleTimeString()} - {timestamp.toLocaleDateString()}
+                  {timestamp.toLocaleTimeString('pt-BR')} - {timestamp.toLocaleDateString('pt-BR')}
+                  {isGrouped && (
+                    <span style={{ fontSize: '0.75rem', color: '#d97706', marginLeft: '8px' }}>
+                      ({reading.occurrences}x em {durationMinutes}min)
+                    </span>
+                  )}
                 </h4>
                 <span className={`chip ${hasAlert ? 'alert' : 'safe'}`}>
                   <span>{hasAlert ? '⚠️' : '✅'}</span>
@@ -49,16 +52,45 @@ export default function HistoryList({ history = [], isOnline = true }) {
               </div>
               
               <div style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
-                <div style={{ color: '#6b7280' }}>
-                  {item.summary || 'Evento registrado'}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(3, 1fr)', 
+                  gap: '12px',
+                  marginTop: '8px'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>BPM</div>
+                    <div style={{ fontWeight: '600', color: hasAlert ? '#dc2626' : '#059669' }}>
+                      {reading.vitals?.bpm || 'N/A'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>SpO2</div>
+                    <div style={{ fontWeight: '600', color: hasAlert ? '#dc2626' : '#059669' }}>
+                      {reading.vitals?.spo2 ? `${reading.vitals.spo2}%` : 'N/A'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Temperatura</div>
+                    <div style={{ fontWeight: '600', color: hasAlert ? '#dc2626' : '#059669' }}>
+                      {reading.vitals?.temperature ? `${reading.vitals.temperature}°C` : 'N/A'}
+                    </div>
+                  </div>
                 </div>
-                {item.resolved && (
-                  <div style={{ fontSize: '0.8rem', color: '#059669', marginTop: '4px' }}>
-                    ✅ Resolvido
+                
+                {isGrouped && (
+                  <div style={{ 
+                    marginTop: '8px', 
+                    padding: '6px 8px', 
+                    background: '#fef3cd', 
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    color: '#92400e'
+                  }}>
+                    ℹ️ Alerta repetido {reading.occurrences} vezes durante {durationMinutes} minutos
                   </div>
                 )}
               </div>
-
             </article>
           );
         })}

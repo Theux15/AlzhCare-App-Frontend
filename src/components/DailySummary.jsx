@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 export default function DailySummary({ summary, isOnline = true }) {
+  const [showVitalsAlerts, setShowVitalsAlerts] = useState(true);
+  
   // Dados padrão se não houver summary
   const defaultSummary = {
     date: new Date().toISOString().split('T')[0],
@@ -215,38 +217,78 @@ export default function DailySummary({ summary, isOnline = true }) {
       {/* Eventos de sinais vitais */}
       {dailyData.vitalsAlerts && dailyData.vitalsAlerts.length > 0 && (
         <div style={{ marginBottom: '20px' }}>
-          <h4 style={{
-            margin: '0 0 12px 0',
-            fontSize: '0.9rem',
-            color: 'var(--text-high)',
-            fontWeight: '600'
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginBottom: '12px'
           }}>
-            🩺 Alterações nos sinais vitais
-          </h4>
-          {dailyData.vitalsAlerts.map((event, index) => (
-            <div key={index} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '8px 12px',
-              background: '#fef3cd',
-              border: '1px solid #fde68a',
-              borderRadius: '8px',
-              marginBottom: '6px'
+            <h4 style={{
+              margin: 0,
+              fontSize: '0.9rem',
+              color: 'var(--text-high)',
+              fontWeight: '600'
             }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: '#92400e', fontWeight: '600' }}>
-                  {event.time}
-                </span>
-                <span style={{ fontSize: '0.8rem', color: '#78350f', marginLeft: '8px' }}>
-                  {event.type.toUpperCase()}: {event.value} ({event.status})
-                </span>
+              🩺 Alertas de Sinais Vitais
+            </h4>
+            <button
+              onClick={() => setShowVitalsAlerts(!showVitalsAlerts)}
+              style={{
+                background: showVitalsAlerts ? '#fde68a' : '#e5e7eb',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '4px 10px',
+                fontSize: '0.75rem',
+                color: showVitalsAlerts ? '#92400e' : '#6b7280',
+                cursor: 'pointer',
+                fontWeight: '600',
+                transition: 'all 0.2s'
+              }}
+            >
+              {showVitalsAlerts ? 'Ocultar' : 'Mostrar'}
+            </button>
+          </div>
+          {showVitalsAlerts && dailyData.vitalsAlerts.map((alert, index) => {
+            const timestamp = new Date(alert.timestamp);
+            const isGrouped = alert.occurrences && alert.occurrences > 1;
+            const durationMinutes = alert.duration ? Math.floor(alert.duration / 60) : 0;
+            
+            return (
+              <div key={alert.id || index} style={{
+                padding: '10px 12px',
+                background: '#fef3cd',
+                border: '1px solid #fde68a',
+                borderRadius: '8px',
+                marginBottom: '6px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#92400e', fontWeight: '600' }}>
+                    {timestamp.toLocaleTimeString('pt-BR')}
+                    {isGrouped && (
+                      <span style={{ fontSize: '0.7rem', color: '#d97706', marginLeft: '6px' }}>
+                        ({alert.occurrences}x em {durationMinutes}min)
+                      </span>
+                    )}
+                  </span>
+                  <span style={{
+                    fontSize: '0.7rem',
+                    color: '#92400e',
+                    background: '#fde68a',
+                    padding: '2px 6px',
+                    borderRadius: '8px',
+                    fontWeight: '600'
+                  }}>
+                    {alert.alertType?.toUpperCase() || 'ALERTA'}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#78350f' }}>
+                  BPM: {alert.vitals?.bpm || 'N/A'} | 
+                  SpO2: {alert.vitals?.spo2 ? `${alert.vitals.spo2}%` : 'N/A'} | 
+                  Temp: {alert.vitals?.temperature ? `${alert.vitals.temperature}°C` : 'N/A'}
+                </div>
               </div>
-              <span style={{ fontSize: '0.7rem', color: '#a16207' }}>
-                Normal: {event.normal}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

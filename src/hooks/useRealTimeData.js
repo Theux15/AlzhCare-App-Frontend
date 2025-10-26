@@ -62,12 +62,22 @@ export const useRealTimeData = () => {
     
     // Salvar última leitura se há dados
     if (currentData?.esp32) {
+      // Verificar se os sinais vitais estão fora dos limites normais
+      const bpm = currentData.esp32.BPM;
+      const spo2 = currentData.esp32.SpO2;
+      const temperature = currentData.esp32.temperature;
+      
+      const hasVitalAlert = 
+        (bpm && (bpm < 60 || bpm > 100)) ||
+        (spo2 && spo2 < 95) ||
+        (temperature && (temperature < 20 || temperature > 30));
+      
       localStorageService.saveLastReading({
-        bpm: currentData.esp32.BPM,
-        spo2: currentData.esp32.SpO2,
-        temperature: currentData.esp32.temperature,
+        bpm: bpm,
+        spo2: spo2,
+        temperature: temperature,
         location: currentData.location || null,
-        status: vitalsArray.length > 0 || fallsArray.length > 0 ? 'alert' : 'normal'
+        status: hasVitalAlert || vitalsArray.length > 0 || fallsArray.length > 0 ? 'alert' : 'normal'
       });
     }
 
@@ -180,13 +190,21 @@ export const useRealTimeData = () => {
       if (response.success) {
         // Mapear dados do backend para o formato esperado pelo frontend
         const backendData = response.data;
+        
+        // Obter alertas vitais do histórico local (limitados)
+        const localReadings = localStorageService.getReadingsHistory();
+        const todayAlerts = localReadings.filter(r => {
+          const readingDate = new Date(r.timestamp).toISOString().split('T')[0];
+          return readingDate === backendData.date && r.status === 'alert';
+        });
+        
         const mappedSummary = {
           date: backendData.date,
           fallsCount: backendData.falls?.total_falls || 0,
-          vitalsAlertsCount: backendData.vitals?.total_abnormal_readings || 0,
+          vitalsAlertsCount: todayAlerts.length, // Usar alertas do localStorage
           locationsCount: backendData.locations?.unique_locations || 0,
           sosCount: backendData.sos?.total_sos_activations || 0,
-          vitalsAlerts: backendData.vitals?.abnormal_readings || [],
+          vitalsAlerts: todayAlerts, // Alertas do localStorage com agrupamento
           locations: backendData.locations?.locations || [],
           falls: backendData.falls?.falls || [],
           sosEvents: backendData.sos?.events || []
@@ -357,6 +375,9 @@ export const useRealTimeData = () => {
   
   // Função para limpar dados locais
   const clearLocalData = () => localStorageService.clearAll();
+  
+  // Função para obter histórico de leituras
+  const getReadingsHistory = () => localStorageService.getReadingsHistory();
 
   return {
     // Dados principais
@@ -366,6 +387,7 @@ export const useRealTimeData = () => {
     sosAlerts: data.sosAlerts,
     fallAlerts: data.fallAlerts,
     vitalsAlerts: data.vitalsAlerts,
+    readingsHistory: getReadingsHistory(), // Novo: histórico de leituras
     isOnline: data.isOnline,
     lastUpdate: data.lastUpdate,
     error: data.error,
