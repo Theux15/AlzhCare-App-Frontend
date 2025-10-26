@@ -22,6 +22,7 @@ export default function App() {
     sosAlerts,
     fallAlerts,
     vitalsAlerts,
+    readingsHistory,
     isOnline,
     lastUpdate,
     resolveSOS,
@@ -129,7 +130,7 @@ export default function App() {
           {/* History */}
           <section id="history" style={{ marginBottom: '32px' }}>
             <HistoryList 
-              history={history || []}
+              history={readingsHistory || []}
               isOnline={isOnline}
             />
           </section>
