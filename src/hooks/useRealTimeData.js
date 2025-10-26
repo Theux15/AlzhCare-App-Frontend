@@ -67,17 +67,18 @@ export const useRealTimeData = () => {
       const spo2 = currentData.esp32.SpO2;
       const temperature = currentData.esp32.temperature;
       
+      // BPM e SpO2 são opcionais (podem ser N/A), temperatura é obrigatória
       const hasVitalAlert = 
-        (bpm && (bpm < 60 || bpm > 100)) ||
-        (spo2 && spo2 < 95) ||
-        (temperature && (temperature < 20 || temperature > 30));
+        (bpm && bpm > 0 && (bpm < 60 || bpm > 100)) ||
+        (spo2 && spo2 > 0 && spo2 < 95) ||
+        (temperature && temperature > 0 && (temperature < 20 || temperature > 30));
       
       localStorageService.saveLastReading({
         bpm: bpm,
         spo2: spo2,
         temperature: temperature,
         location: currentData.location || null,
-        status: hasVitalAlert || vitalsArray.length > 0 || fallsArray.length > 0 ? 'alert' : 'normal'
+        status: hasVitalAlert ? 'alert' : 'normal' // Baseado APENAS nos valores atuais
       });
     }
 

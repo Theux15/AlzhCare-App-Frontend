@@ -186,6 +186,22 @@ class LocalStorageService {
       const history = this.getReadingsHistory();
       const isAlert = reading.status === 'alert';
       
+      // Evitar duplicatas: verificar se já existe leitura muito recente com mesmos valores
+      const recentDuplicate = history.find(h => {
+        const timeDiff = Math.abs(new Date(reading.timestamp).getTime() - new Date(h.timestamp).getTime());
+        const sameTemp = Math.abs((reading.vitals?.temperature || 0) - (h.vitals?.temperature || 0)) < 0.1;
+        const sameBpm = (reading.vitals?.bpm || 0) === (h.vitals?.bpm || 0);
+        const sameSpo2 = (reading.vitals?.spo2 || 0) === (h.vitals?.spo2 || 0);
+        
+        // Se está dentro de 15 segundos e tem os mesmos valores, é duplicata
+        return timeDiff < 15000 && sameTemp && sameBpm && sameSpo2;
+      });
+      
+      if (recentDuplicate) {
+        console.log('🔄 Leitura duplicada ignorada');
+        return;
+      }
+      
       if (isAlert) {
         // Identificar tipo de alerta baseado nos valores
         const alertTypes = [];
