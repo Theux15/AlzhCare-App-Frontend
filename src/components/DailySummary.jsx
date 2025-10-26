@@ -331,10 +331,10 @@ export default function DailySummary({ summary, isOnline = true }) {
             }}>
               <div>
                 <span style={{ fontSize: '0.75rem', color: '#475569', fontWeight: '600' }}>
-                  {new Date(location.timestamp).toLocaleTimeString()}
+                  {new Date(location.timestamp || location.arrived_at).toLocaleTimeString('pt-BR')}
                 </span>
                 <div style={{ fontSize: '0.8rem', color: '#334155' }}>
-                  {location.address || `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`}
+                  {location.address?.formatted || location.address || `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`}
                 </div>
               </div>
               <span style={{ 
@@ -344,7 +344,7 @@ export default function DailySummary({ summary, isOnline = true }) {
                 padding: '2px 6px',
                 borderRadius: '4px'
               }}>
-                {location.neighborhood || 'Localização'}
+                {location.address?.components?.neighborhood || location.neighborhood || 'Localização'}
               </span>
             </div>
           ))
