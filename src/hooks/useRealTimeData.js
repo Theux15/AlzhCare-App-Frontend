@@ -41,8 +41,11 @@ export const useRealTimeData = () => {
         fallsCount: unresolved.falls.length,
         vitalsAlertsCount: unresolved.vitals.length,
         locationsCount: 0,
+        sosCount: unresolved.sos.length,
         vitalsAlerts: unresolved.vitals,
-        locations: []
+        locations: [],
+        falls: unresolved.falls,
+        sosEvents: unresolved.sos
       },
       isOnline: false,
       error: 'Usando dados salvos localmente - Sistema offline'
@@ -156,9 +159,23 @@ export const useRealTimeData = () => {
     try {
       const response = await apiService.getDailySummary();
       if (response.success) {
+        // Mapear dados do backend para o formato esperado pelo frontend
+        const backendData = response.data;
+        const mappedSummary = {
+          date: backendData.date,
+          fallsCount: backendData.falls?.total_falls || 0,
+          vitalsAlertsCount: backendData.vitals?.total_abnormal_readings || 0,
+          locationsCount: backendData.locations?.unique_locations || 0,
+          sosCount: backendData.sos?.total_sos_activations || 0,
+          vitalsAlerts: backendData.vitals?.abnormal_readings || [],
+          locations: backendData.locations?.locations || [],
+          falls: backendData.falls?.falls || [],
+          sosEvents: backendData.sos?.events || []
+        };
+
         setData(prev => ({
           ...prev,
-          dailySummary: response.data
+          dailySummary: mappedSummary
         }));
       }
     } catch (error) {

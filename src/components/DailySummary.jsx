@@ -7,8 +7,11 @@ export default function DailySummary({ summary, isOnline = true }) {
     fallsCount: 0,
     vitalsAlertsCount: 0,
     locationsCount: 0,
+    sosCount: 0,
     vitalsAlerts: [],
-    locations: []
+    locations: [],
+    falls: [],
+    sosEvents: []
   };
 
   const dailyData = summary || defaultSummary;
@@ -52,7 +55,7 @@ export default function DailySummary({ summary, isOnline = true }) {
       {/* Cards de alertas */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
+        gridTemplateColumns: 'repeat(4, 1fr)',
         gap: '12px',
         marginBottom: '24px'
       }}>
@@ -73,6 +76,26 @@ export default function DailySummary({ summary, isOnline = true }) {
             fontWeight: '600'
           }}>
             {dailyData.fallsCount} quedas
+          </div>
+        </div>
+
+        {/* SOS */}
+        <div style={{
+          background: dailyData.sosCount > 0 ? '#fef2f2' : '#f0fdf4',
+          border: `1px solid ${dailyData.sosCount > 0 ? '#fecaca' : '#bbf7d0'}`,
+          borderRadius: '12px',
+          padding: '12px 8px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>
+            {dailyData.sosCount > 0 ? '🆘' : '✅'}
+          </div>
+          <div style={{ 
+            fontSize: '0.7rem', 
+            color: dailyData.sosCount > 0 ? '#dc2626' : '#16a34a',
+            fontWeight: '600'
+          }}>
+            {dailyData.sosCount} SOS
           </div>
         </div>
 
@@ -114,6 +137,80 @@ export default function DailySummary({ summary, isOnline = true }) {
           </div>
         </div>
       </div>
+
+      {/* Eventos de quedas */}
+      {dailyData.falls && dailyData.falls.length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <h4 style={{
+            margin: '0 0 12px 0',
+            fontSize: '0.9rem',
+            color: 'var(--text-high)',
+            fontWeight: '600'
+          }}>
+            ⚠️ Quedas detectadas
+          </h4>
+          {dailyData.falls.map((fall, index) => (
+            <div key={fall.id || index} style={{
+              padding: '8px 12px',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              marginBottom: '6px'
+            }}>
+              <span style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: '600' }}>
+                {new Date(fall.detected_at || fall.timestamp).toLocaleTimeString('pt-BR')}
+              </span>
+              <span style={{ fontSize: '0.8rem', color: '#991b1b', marginLeft: '8px' }}>
+                Queda detectada
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Eventos SOS */}
+      {dailyData.sosEvents && dailyData.sosEvents.length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <h4 style={{
+            margin: '0 0 12px 0',
+            fontSize: '0.9rem',
+            color: 'var(--text-high)',
+            fontWeight: '600'
+          }}>
+            🆘 Acionamentos SOS
+          </h4>
+          {dailyData.sosEvents.map((sos, index) => (
+            <div key={sos.id || index} style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '8px 12px',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              marginBottom: '6px'
+            }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: '600' }}>
+                  {new Date(sos.activated_at || sos.timestamp).toLocaleTimeString('pt-BR')}
+                </span>
+                <span style={{ fontSize: '0.8rem', color: '#991b1b', marginLeft: '8px' }}>
+                  {sos.message || 'Botão SOS acionado'}
+                </span>
+              </div>
+              <span style={{ 
+                fontSize: '0.7rem', 
+                color: sos.resolved ? '#16a34a' : '#dc2626',
+                background: sos.resolved ? '#f0fdf4' : '#fef2f2',
+                padding: '2px 6px',
+                borderRadius: '4px'
+              }}>
+                {sos.resolved ? 'Resolvido' : 'Ativo'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Eventos de sinais vitais */}
       {dailyData.vitalsAlerts && dailyData.vitalsAlerts.length > 0 && (
