@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import configService from '../services/configService'
 
 export default function MapCard({ sensorData, onToggleMap, showMap, isOnline = true }) {
   // Extrair dados GPS dos sensores
@@ -15,18 +16,29 @@ export default function MapCard({ sensorData, onToggleMap, showMap, isOnline = t
 
   // Estado da localização
   const [locationText, setLocationText] = useState('Aguardando localização...');
+  const [geofenceInfo, setGeofenceInfo] = useState(null);
 
   useEffect(() => {
     if (gpsInfo.latitude && gpsInfo.longitude && gpsInfo.isActive) {
-      // Usar o endereço formatado se disponível, senão mostrar coordenadas
-      const address = sensorData?.location?.formatted_address || sensorData?.location?.address?.formatted;
-      if (address) {
-        setLocationText(`${address} · Última atualização agora`);
+      // Verificar geofencing
+      const geofence = configService.checkGeofence(gpsInfo.latitude, gpsInfo.longitude);
+      setGeofenceInfo(geofence.isInGeofence ? geofence : null);
+
+      // Usar nome do local se estiver em geofence
+      if (geofence.isInGeofence) {
+        setLocationText(`📍 ${geofence.location} · ${geofence.distance}m do centro`);
       } else {
-        setLocationText(`${gpsInfo.latitude.toFixed(6)}, ${gpsInfo.longitude.toFixed(6)} · Última atualização agora`);
+        // Usar o endereço formatado se disponível, senão mostrar coordenadas
+        const address = sensorData?.location?.formatted_address || sensorData?.location?.address?.formatted;
+        if (address) {
+          setLocationText(`${address} · Última atualização agora`);
+        } else {
+          setLocationText(`${gpsInfo.latitude.toFixed(6)}, ${gpsInfo.longitude.toFixed(6)} · Última atualização agora`);
+        }
       }
     } else {
       setLocationText('Aguardando sinal GPS...');
+      setGeofenceInfo(null);
     }
   }, [gpsInfo.latitude, gpsInfo.longitude, gpsInfo.isActive, sensorData?.location?.formatted_address, sensorData?.location?.address?.formatted]);
 
@@ -38,16 +50,39 @@ export default function MapCard({ sensorData, onToggleMap, showMap, isOnline = t
         overflow: 'hidden',
         minHeight: '140px',
         boxShadow: 'var(--card-shadow)',
-        background: 'linear-gradient(140deg, rgba(186, 160, 211, 0.35), rgba(94, 53, 177, 0.45))',
+        background: geofenceInfo ? 
+          'linear-gradient(140deg, rgba(16, 185, 129, 0.35), rgba(5, 150, 105, 0.45))' :
+          'linear-gradient(140deg, rgba(186, 160, 211, 0.35), rgba(94, 53, 177, 0.45))',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         color: '#ffffff',
         textAlign: 'center',
         padding: '16px',
-        margin: '0 auto'
+        margin: '0 auto',
+        transition: 'background 0.3s ease'
       }}
     >
+      {/* Indicador de Geofence - canto superior esquerdo */}
+      {geofenceInfo && (
+        <div style={{
+          position: 'absolute',
+          top: '12px',
+          left: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '0.75rem',
+          background: 'rgba(16, 185, 129, 0.9)',
+          padding: '4px 8px',
+          borderRadius: '12px',
+          fontWeight: '600'
+        }}>
+          <span>✓</span>
+          <span>Em local conhecido</span>
+        </div>
+      )}
+
       {/* Status dos satélites - canto superior direito */}
       <div style={{
         position: 'absolute',

@@ -1,10 +1,28 @@
 import React from 'react'
 
-export default function Header() {
+export default function Header({ onNavigate, currentPage }) {
   const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
+    // Se estiver na página de config, voltar para home primeiro
+    if (currentPage === 'config' && onNavigate) {
+      onNavigate('home');
+      // Aguardar um pouco para a página carregar antes de fazer scroll
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }
+
+  const handleConfigClick = () => {
+    if (onNavigate) {
+      onNavigate('config')
     }
   }
 
@@ -34,7 +52,7 @@ export default function Header() {
           maxWidth: '335px'
         }}>
           <button
-            onClick={() => scrollToSection('vitals')}
+            onClick={() => scrollToSection('dashboard')}
             style={{
               background: 'rgba(94, 53, 177, 0.1)',
               border: '1px solid rgba(94, 53, 177, 0.2)',
@@ -58,7 +76,7 @@ export default function Header() {
           </button>
           
           <button
-            onClick={() => scrollToSection('location')}
+            onClick={() => scrollToSection('falls')}
             style={{
               background: 'rgba(94, 53, 177, 0.1)',
               border: '1px solid rgba(94, 53, 177, 0.2)',
@@ -82,7 +100,7 @@ export default function Header() {
           </button>
           
           <button
-            onClick={() => scrollToSection('daily-summary')}
+            onClick={() => scrollToSection('summary')}
             style={{
               background: 'rgba(94, 53, 177, 0.1)',
               border: '1px solid rgba(94, 53, 177, 0.2)',
@@ -103,6 +121,30 @@ export default function Header() {
             }}
           >
             📊 Resumo
+          </button>
+          
+          <button
+            onClick={handleConfigClick}
+            style={{
+              background: 'rgba(94, 53, 177, 0.1)',
+              border: '1px solid rgba(94, 53, 177, 0.2)',
+              borderRadius: '16px',
+              padding: '4px 10px',
+              fontSize: '0.7rem',
+              color: 'var(--text-medium)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.background = 'rgba(94, 53, 177, 0.15)'
+              e.target.style.color = 'var(--text-high)'
+            }}
+            onMouseOut={(e) => {
+              e.target.style.background = 'rgba(94, 53, 177, 0.1)'
+              e.target.style.color = 'var(--text-medium)'
+            }}
+          >
+            ⚙️ Config
           </button>
         </div>
       </div>

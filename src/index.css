@@ -19,6 +19,13 @@
 	--surface-alt: rgba(186, 160, 211, 0.18);
 	--card-shadow: 0 20px 40px rgba(47, 19, 105, 0.15);
 }
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 120px; /* Compensar altura do header + navegação */
+}
+
 /* load Inter for a modern sans-serif look */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 

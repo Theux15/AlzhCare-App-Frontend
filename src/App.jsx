@@ -10,11 +10,14 @@ import DailySummary from './components/DailySummary'
 import SOSAlert from './components/SOSAlert'
 import SOSCard from './components/SOSCard'
 import LocalStorageStats from './components/LocalStorageStats'
+import ConfigPage from './components/ConfigPage'
 import { useRealTimeData } from './hooks/useRealTimeData'
 import './index.css'
 
 export default function App() {
   const [showMap, setShowMap] = useState(false)
+  const [currentPage, setCurrentPage] = useState('home') // 'home' ou 'config'
+  
   const {
     currentData,
     history,
@@ -33,6 +36,37 @@ export default function App() {
   // Show connection error if offline for too long
   const showConnectionError = !isOnline && error
 
+  // Se estiver na página de configurações
+  if (currentPage === 'config') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+        <Header onNavigate={setCurrentPage} currentPage={currentPage} />
+        <div className="max-w-7xl mx-auto px-4 pb-8" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 16px 32px' }}>
+          <button
+            onClick={() => setCurrentPage('home')}
+            style={{
+              marginTop: '20px',
+              marginBottom: '20px',
+              padding: '8px 16px',
+              background: 'rgba(94, 53, 177, 0.1)',
+              border: '1px solid rgba(94, 53, 177, 0.2)',
+              borderRadius: '8px',
+              color: 'var(--text-medium)',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            ← Voltar ao Dashboard
+          </button>
+          <ConfigPage />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* SOS Alert Banner */}
@@ -41,7 +75,7 @@ export default function App() {
       />
       
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-        <Header />
+        <Header onNavigate={setCurrentPage} currentPage={currentPage} />
         
         {/* Connection Status */}
         {showConnectionError && (

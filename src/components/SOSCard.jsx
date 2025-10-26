@@ -1,6 +1,20 @@
 import React from 'react'
+import configService from '../services/configService'
 
 export default function SOSCard({ sosActive }) {
+  const config = configService.getConfig();
+
+  const handleEmergencyCall = () => {
+    window.location.href = `tel:${config.emergencyPhone}`;
+  };
+
+  const handleCarrierCall = () => {
+    if (config.carrier.phone) {
+      window.location.href = `tel:${config.carrier.phone}`;
+    } else {
+      alert('Configure o telefone do portador nas Configurações');
+    }
+  };
   return (
     <div style={{
       background: sosActive ? 
@@ -73,29 +87,41 @@ export default function SOSCard({ sosActive }) {
           justifyContent: 'center',
           flexWrap: 'wrap'
         }}>
-          <button style={{
-            background: '#dc2626',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '8px 16px',
-            fontSize: '0.8rem',
-            fontWeight: '600',
-            cursor: 'pointer'
-          }}>
+          <button 
+            onClick={handleEmergencyCall}
+            style={{
+              background: '#dc2626',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '8px 16px',
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => e.target.style.background = '#b91c1c'}
+            onMouseLeave={(e) => e.target.style.background = '#dc2626'}
+          >
             🚨 Chamar Emergência
           </button>
-          <button style={{
-            background: '#059669',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '8px 16px',
-            fontSize: '0.8rem',
-            fontWeight: '600',
-            cursor: 'pointer'
-          }}>
-            📞 Ligar para Usuário
+          <button 
+            onClick={handleCarrierCall}
+            style={{
+              background: config.carrier.phone ? '#059669' : '#9ca3af',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '8px 16px',
+              fontSize: '0.8rem',
+              fontWeight: '600',
+              cursor: config.carrier.phone ? 'pointer' : 'not-allowed',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => config.carrier.phone && (e.target.style.background = '#047857')}
+            onMouseLeave={(e) => config.carrier.phone && (e.target.style.background = '#059669')}
+          >
+            📞 Ligar para {config.carrier.name || 'Usuário'}
           </button>
         </div>
       )}
