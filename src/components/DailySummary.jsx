@@ -153,17 +153,32 @@ export default function DailySummary({ summary, isOnline = true }) {
           </h4>
           {dailyData.falls.map((fall, index) => (
             <div key={fall.id || index} style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               padding: '8px 12px',
               background: '#fef2f2',
               border: '1px solid #fecaca',
               borderRadius: '8px',
               marginBottom: '6px'
             }}>
-              <span style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: '600' }}>
-                {new Date(fall.detected_at || fall.timestamp).toLocaleTimeString('pt-BR')}
-              </span>
-              <span style={{ fontSize: '0.8rem', color: '#991b1b', marginLeft: '8px' }}>
-                Queda detectada
+              <div>
+                <span style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: '600' }}>
+                  {new Date(fall.detected_at || fall.timestamp).toLocaleTimeString('pt-BR')}
+                </span>
+                <span style={{ fontSize: '0.8rem', color: '#991b1b', marginLeft: '8px' }}>
+                  Queda detectada
+                </span>
+              </div>
+              <span style={{ 
+                fontSize: '0.7rem', 
+                color: fall.resolved ? '#16a34a' : '#dc2626',
+                background: fall.resolved ? '#f0fdf4' : '#fef2f2',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontWeight: '600'
+              }}>
+                {fall.resolved ? 'Resolvido' : 'Ativo'}
               </span>
             </div>
           ))}

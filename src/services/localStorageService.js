@@ -212,28 +212,37 @@ class LocalStorageService {
           );
           
           if (lastAlertOfType) {
-            const lastTime = new Date(lastAlertOfType.timestamp).getTime();
+            const lastTime = new Date(lastAlertOfType.lastOccurrence || lastAlertOfType.timestamp).getTime();
             const timeDiff = now - lastTime;
             
             // Verificar se está dentro da janela de agrupamento (5 min)
             if (timeDiff <= this.alertGroupingWindow) {
-              // Para temperatura, verificar tolerância de ±0.5°C
+              // Para temperatura, verificar tolerância de ±0.5°C em relação à última ocorrência
               let canGroup = true;
               if (type === 'temperature') {
                 const currentTemp = reading.vitals?.temperature || 0;
-                const lastTemp = lastAlertOfType.vitals?.temperature || 0;
+                // Usar temperatura da última ocorrência, não da primeira
+                const lastTemp = lastAlertOfType.lastTemperature || lastAlertOfType.vitals?.temperature || 0;
                 const tempDiff = Math.abs(currentTemp - lastTemp);
                 canGroup = tempDiff <= this.temperatureTolerance;
+                
+                if (!canGroup) {
+                  console.log(`🌡️ Temperatura fora da tolerância: ${lastTemp}°C → ${currentTemp}°C (Δ=${tempDiff.toFixed(1)}°C > ${this.temperatureTolerance}°C)`);
+                }
               }
               
               if (canGroup) {
                 lastAlertOfType.lastOccurrence = reading.timestamp;
                 lastAlertOfType.occurrences = (lastAlertOfType.occurrences || 1) + 1;
-                lastAlertOfType.duration = Math.floor(timeDiff / 1000); // em segundos
+                lastAlertOfType.duration = Math.floor((now - new Date(lastAlertOfType.timestamp).getTime()) / 1000); // duração total desde o primeiro alerta
+                
+                // Atualizar a temperatura da última ocorrência para próxima comparação
+                if (type === 'temperature') {
+                  lastAlertOfType.lastTemperature = reading.vitals?.temperature;
+                }
+                
                 shouldAddNew = false;
                 console.log(`🔄 Alerta de ${type} agrupado (${lastAlertOfType.occurrences} ocorrências, ${Math.floor(lastAlertOfType.duration / 60)}min)`);
-              } else {
-                console.log(`🌡️ Temperatura fora da tolerância (±${this.temperatureTolerance}°C), criando novo alerta`);
               }
             }
           }
