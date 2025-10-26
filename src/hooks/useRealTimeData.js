@@ -24,6 +24,7 @@ export const useRealTimeData = () => {
   const loadFromLocalStorage = () => {
     const lastReading = localStorageService.getLastReading();
     const unresolved = localStorageService.getUnresolvedAlerts();
+    const allFalls = localStorageService.getFallAlerts(); // Todas as quedas (resolvidas e não resolvidas)
     const todayStats = localStorageService.getTodayStats();
 
     setData(prev => ({
@@ -34,17 +35,17 @@ export const useRealTimeData = () => {
         timestamp: lastReading.timestamp
       } : null,
       vitalsAlerts: unresolved.vitals,
-      fallAlerts: unresolved.falls,
+      fallAlerts: allFalls, // Usar todas as quedas, não apenas não resolvidas
       sosAlerts: unresolved.sos,
       dailySummary: todayStats || {
         date: new Date().toISOString().split('T')[0],
-        fallsCount: unresolved.falls.length,
+        fallsCount: allFalls.length, // Contar todas as quedas do dia
         vitalsAlertsCount: unresolved.vitals.length,
         locationsCount: 0,
         sosCount: unresolved.sos.length,
         vitalsAlerts: unresolved.vitals,
         locations: [],
-        falls: unresolved.falls,
+        falls: allFalls, // Incluir todas as quedas no resumo
         sosEvents: unresolved.sos
       },
       isOnline: false,
@@ -78,13 +79,23 @@ export const useRealTimeData = () => {
       }
     });
 
-    // Salvar novos alertas de queda
-    fallsArray.forEach(alert => {
-      const existing = localStorageService.getFallAlerts();
-      if (!existing.find(a => a.timestamp === alert.timestamp)) {
-        localStorageService.saveFallAlert(alert);
+    // Para quedas, apenas salvar se realmente houver detecção ativa no momento
+    if (currentData?.esp32?.fall || currentData?.fall_detection?.fall_detected) {
+      const existingFalls = localStorageService.getFallAlerts();
+      const lastFall = existingFalls[0];
+      
+      // Só criar nova queda se não há queda ativa recente (últimos 30 segundos)
+      if (!lastFall || lastFall.resolved || 
+          (Date.now() - new Date(lastFall.timestamp).getTime()) > 30000) {
+        
+        localStorageService.saveFallAlert({
+          location: currentData.location || null,
+          severity: 'high',
+          sensors: currentData.esp32 || null
+        });
+        console.log('🚨 Nova queda salva no localStorage');
       }
-    });
+    }
 
     // Salvar novos alertas SOS
     sosArray.forEach(alert => {
@@ -110,10 +121,18 @@ export const useRealTimeData = () => {
 
         const vitalsAlerts = Array.isArray(vitalsResponse?.data) ? vitalsResponse.data : 
                             (vitalsResponse?.success && Array.isArray(vitalsResponse.data)) ? vitalsResponse.data : [];
-        const fallAlerts = Array.isArray(fallsResponse?.data) ? fallsResponse.data : 
-                          (fallsResponse?.success && Array.isArray(fallsResponse.data)) ? fallsResponse.data : [];
-        const sosAlerts = Array.isArray(sosResponse?.data) ? sosResponse.data : 
-                         (sosResponse?.success && Array.isArray(sosResponse.data)) ? sosResponse.data : [];
+        
+        // Processar dados de quedas - priorizar localStorage sobre backend
+        const fallsData = fallsResponse?.success && fallsResponse?.data ? fallsResponse.data : {};
+        const backendFalls = fallsData.history || [];
+        const localFalls = localStorageService.getFallAlerts();
+        
+        // Usar quedas do localStorage como fonte principal
+        const fallAlerts = localFalls.length > 0 ? localFalls : backendFalls;
+        
+        // Processar dados de SOS - o backend retorna { current_status, history, daily_stats }
+        const sosData = sosResponse?.success && sosResponse?.data ? sosResponse.data : {};
+        const sosAlerts = sosData.history || [];
 
         setData(prev => ({
           ...prev,
@@ -224,23 +243,41 @@ export const useRealTimeData = () => {
     return false;
   };
 
-  // Função para resolver queda
+  // Função para resolver queda (apenas local)
   const resolveFall = async (fallId) => {
+    console.log('Resolvendo queda localmente:', fallId);
     try {
-      const response = await apiService.resolveFall(fallId);
-      if (response.success) {
-        // Atualizar localStorage também
-        localStorageService.resolveAlert('fall', fallId);
-        // Atualizar dados após resolver
-        await fetchCurrentData();
+      // Resolver no localStorage primeiro
+      const resolved = localStorageService.resolveAlert('fall', fallId);
+      
+      if (resolved) {
+        console.log('✅ Queda resolvida no localStorage');
+        
+        // Atualizar dados do estado imediatamente
+        setData(prev => {
+          const updatedFallAlerts = prev.fallAlerts.map(alert => 
+            String(alert.id) === String(fallId) ? 
+              { ...alert, resolved: true, resolvedAt: new Date().toISOString() } : 
+              alert
+          );
+          
+          console.log('📊 Atualizando estado com quedas:', updatedFallAlerts);
+          
+          return {
+            ...prev,
+            fallAlerts: updatedFallAlerts
+          };
+        });
+        
         return true;
+      } else {
+        console.log('❌ Queda não encontrada no localStorage');
+        return false;
       }
     } catch (error) {
-      console.error('Erro ao resolver queda:', error);
-      // Se API falhar, tentar resolver localmente
-      return localStorageService.resolveAlert('fall', fallId);
+      console.error('❌ Erro ao resolver queda:', error);
+      return false;
     }
-    return false;
   };
 
   // Setup dos intervalos de polling

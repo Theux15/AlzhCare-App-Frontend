@@ -134,13 +134,15 @@ class LocalStorageService {
           return false;
       }
 
-      const alertIndex = alerts.findIndex(alert => alert.id === alertId);
+      const alertIndex = alerts.findIndex(alert => String(alert.id) === String(alertId));
       if (alertIndex !== -1) {
         alerts[alertIndex].resolved = true;
         alerts[alertIndex].resolvedAt = new Date().toISOString();
         localStorage.setItem(key, JSON.stringify(alerts));
-        console.log(`✅ Alerta ${alertType} #${alertId} resolvido`);
+        console.log(`✅ Alerta ${alertType} #${alertId} resolvido no localStorage`);
         return true;
+      } else {
+        console.log(`❌ Alerta ${alertType} #${alertId} não encontrado. IDs disponíveis:`, alerts.map(a => a.id));
       }
       
       return false;
