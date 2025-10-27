@@ -108,13 +108,22 @@ export const useRealTimeData = () => {
       }
     }
 
-    // Salvar novos alertas SOS
-    sosArray.forEach(alert => {
-      const existing = localStorageService.getSOSAlerts();
-      if (!existing.find(a => a.timestamp === alert.timestamp)) {
-        localStorageService.saveSOSAlert(alert);
+    // Para SOS, apenas salvar se realmente houver botão SOS ativo no momento
+    if (currentData?.esp32?.sos || currentData?.sos?.active) {
+      const existingSOS = localStorageService.getSOSAlerts();
+      const lastSOS = existingSOS[0];
+      
+      // Só criar novo SOS se não há SOS ativo recente (últimos 30 segundos)
+      if (!lastSOS || lastSOS.resolved || 
+          (Date.now() - new Date(lastSOS.timestamp).getTime()) > 30000) {
+        
+        localStorageService.saveSOSAlert({
+          location: currentData.location || null,
+          message: 'Botão SOS acionado'
+        });
+        console.log('🚨 Novo SOS salvo no localStorage');
       }
-    });
+    }
   };
 
   // Função para buscar dados atuais
@@ -141,9 +150,13 @@ export const useRealTimeData = () => {
         // Usar quedas do localStorage como fonte principal
         const fallAlerts = localFalls.length > 0 ? localFalls : backendFalls;
         
-        // Processar dados de SOS - o backend retorna { current_status, history, daily_stats }
+        // Processar dados de SOS - priorizar localStorage sobre backend
         const sosData = sosResponse?.success && sosResponse?.data ? sosResponse.data : {};
-        const sosAlerts = sosData.history || [];
+        const backendSOS = sosData.history || [];
+        const localSOS = localStorageService.getSOSAlerts();
+        
+        // Usar SOS do localStorage como fonte principal
+        const sosAlerts = localSOS.length > 0 ? localSOS : backendSOS;
 
         setData(prev => ({
           ...prev,
