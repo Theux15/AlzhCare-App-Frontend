@@ -123,6 +123,15 @@ export const useRealTimeData = () => {
         });
         console.log('🚨 Novo SOS salvo no localStorage');
       }
+    } else {
+      // Se o botão SOS foi desligado, resolver automaticamente qualquer SOS ativo
+      const existingSOS = localStorageService.getSOSAlerts();
+      const activeSOS = existingSOS.find(sos => !sos.resolved);
+      
+      if (activeSOS) {
+        localStorageService.resolveAlert('sos', activeSOS.id);
+        console.log('✅ SOS resolvido automaticamente (botão desligado)');
+      }
     }
   };
 
