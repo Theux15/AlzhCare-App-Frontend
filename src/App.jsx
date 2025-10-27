@@ -92,7 +92,7 @@ export default function App() {
         )}
         
         <div className="max-w-7xl mx-auto px-4 pb-8" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 16px 32px' }}>
-          <Hero />
+          {/* <Hero />*/} 
           
           {/* Status Dashboard */}
           <section id="dashboard" style={{ marginBottom: '32px' }}>
