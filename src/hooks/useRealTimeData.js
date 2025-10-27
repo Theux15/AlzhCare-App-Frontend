@@ -14,7 +14,8 @@ export const useRealTimeData = () => {
     quickHistory: null,
     lastUpdate: null,
     isOnline: false,
-    error: null
+    error: null,
+    sosActive: false
   });
 
   const [loading, setLoading] = useState(true);
@@ -49,7 +50,8 @@ export const useRealTimeData = () => {
         sosEvents: unresolved.sos
       },
       isOnline: false,
-      error: 'Usando dados salvos localmente - Sistema offline'
+      error: 'Usando dados salvos localmente - Sistema offline',
+      sosActive: unresolved.sos.length > 0
     }));
   };
 
@@ -58,8 +60,6 @@ export const useRealTimeData = () => {
     // Garantir que os alertas sejam arrays
     const vitalsArray = Array.isArray(vitalsAlerts) ? vitalsAlerts : [];
     const fallsArray = Array.isArray(fallAlerts) ? fallAlerts : [];
-    const sosArray = Array.isArray(sosAlerts) ? sosAlerts : [];
-    
     // Salvar última leitura se há dados
     if (currentData?.esp32) {
       // Verificar se os sinais vitais estão fora dos limites normais
@@ -108,31 +108,6 @@ export const useRealTimeData = () => {
       }
     }
 
-    // Para SOS, apenas salvar se realmente houver botão SOS ativo no momento
-    if (currentData?.esp32?.sos || currentData?.sos?.active) {
-      const existingSOS = localStorageService.getSOSAlerts();
-      const lastSOS = existingSOS[0];
-      
-      // Só criar novo SOS se não há SOS ativo recente (últimos 30 segundos)
-      if (!lastSOS || lastSOS.resolved || 
-          (Date.now() - new Date(lastSOS.timestamp).getTime()) > 30000) {
-        
-        localStorageService.saveSOSAlert({
-          location: currentData.location || null,
-          message: 'Botão SOS acionado'
-        });
-        console.log('🚨 Novo SOS salvo no localStorage');
-      }
-    } else {
-      // Se o botão SOS foi desligado, resolver automaticamente qualquer SOS ativo
-      const existingSOS = localStorageService.getSOSAlerts();
-      const activeSOS = existingSOS.find(sos => !sos.resolved);
-      
-      if (activeSOS) {
-        localStorageService.resolveAlert('sos', activeSOS.id);
-        console.log('✅ SOS resolvido automaticamente (botão desligado)');
-      }
-    }
   };
 
   // Função para buscar dados atuais
@@ -159,13 +134,17 @@ export const useRealTimeData = () => {
         // Usar quedas do localStorage como fonte principal
         const fallAlerts = localFalls.length > 0 ? localFalls : backendFalls;
         
-        // Processar dados de SOS - priorizar localStorage sobre backend
-        const sosData = sosResponse?.success && sosResponse?.data ? sosResponse.data : {};
-        const backendSOS = sosData.history || [];
+        // Processar dados de SOS - backend como fonte principal
+        const sosData = sosResponse?.success && sosResponse?.data ? sosResponse.data : null;
+        const backendSOS = Array.isArray(sosData?.history) ? sosData.history : [];
+
+        if (sosResponse?.success) {
+          localStorageService.setSOSAlerts(backendSOS);
+        }
+
         const localSOS = localStorageService.getSOSAlerts();
-        
-        // Usar SOS do localStorage como fonte principal
-        const sosAlerts = localSOS.length > 0 ? localSOS : backendSOS;
+  const sosAlerts = sosResponse?.success ? backendSOS : localSOS;
+  const hasActiveSOS = Boolean(response.data?.sos?.sos_active) || Boolean(response.data?.esp32?.sos) || sosAlerts.some(alert => !alert.resolved);
 
         setData(prev => ({
           ...prev,
@@ -173,6 +152,7 @@ export const useRealTimeData = () => {
           vitalsAlerts,
           fallAlerts,
           sosAlerts,
+          sosActive: hasActiveSOS,
           lastUpdate: new Date().toISOString(),
           error: null
         }));
@@ -414,6 +394,7 @@ export const useRealTimeData = () => {
     isOnline: data.isOnline,
     lastUpdate: data.lastUpdate,
     error: data.error,
+  sosActive: data.sosActive,
     loading,
     refreshAllData,
     resolveSOS,

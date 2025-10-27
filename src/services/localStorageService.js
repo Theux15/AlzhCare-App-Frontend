@@ -116,6 +116,29 @@ class LocalStorageService {
     }
   }
 
+  // Substituir alertas SOS usando dados vindos do backend
+  setSOSAlerts(alerts = []) {
+    try {
+      if (!Array.isArray(alerts)) {
+        throw new Error('Lista de alertas SOS inválida');
+      }
+
+      const normalized = alerts.map(alert => ({
+        id: alert.id || alert.sosId || `sos_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        activated_at: alert.activated_at || alert.timestamp || alert.activatedAt || null,
+        timestamp: alert.activated_at || alert.timestamp || new Date().toISOString(),
+        resolved: Boolean(alert.resolved),
+        resolved_at: alert.resolved_at || null,
+        resolved_by: alert.resolved_by || null,
+        message: alert.message || 'Botão SOS acionado'
+      }));
+
+      localStorage.setItem(this.keys.sosAlerts, JSON.stringify(normalized));
+    } catch (error) {
+      console.error('❌ Erro ao sincronizar alertas SOS:', error);
+    }
+  }
+
   // Resolver alerta (marcar como resolvido)
   resolveAlert(alertType, alertId) {
     try {

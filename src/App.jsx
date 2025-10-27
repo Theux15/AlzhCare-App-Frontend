@@ -22,7 +22,6 @@ export default function App() {
     currentData,
     history,
     dailySummary,
-    sosAlerts,
     fallAlerts,
     vitalsAlerts,
     readingsHistory,
@@ -30,7 +29,8 @@ export default function App() {
     lastUpdate,
     resolveSOS,
     resolveFall,
-    error
+    error,
+    sosActive
   } = useRealTimeData()
 
   // Show connection error if offline for too long
@@ -71,7 +71,7 @@ export default function App() {
     <>
       {/* SOS Alert Banner */}
       <SOSAlert 
-        isActive={sosAlerts?.length > 0 || currentData?.esp32?.sos || currentData?.sos?.active} 
+        isActive={sosActive} 
       />
       
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
@@ -138,7 +138,7 @@ export default function App() {
                 Sistema de Emergência
               </h3>
               <SOSCard 
-                sosActive={sosAlerts?.length > 0 || currentData?.esp32?.sos || currentData?.sos?.active}
+                sosActive={sosActive}
               />
             </div>
           </section>
