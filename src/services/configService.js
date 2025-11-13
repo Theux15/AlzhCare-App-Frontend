@@ -30,7 +30,7 @@ class ConfigService {
         { id: 2, name: '', address: '', latitude: null, longitude: null },
         { id: 3, name: '', address: '', latitude: null, longitude: null }
       ],
-      geofenceRadius: 100 // metros
+      geofenceRadius: 500 // metros
     };
   }
 
